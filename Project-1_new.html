@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tic-Tac-Toe Game</title>
+    <style>
+        /* CSS for styling the game board */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            gap: 5px;
+            margin-left: 38%;
+            background-color: black;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            font-size: 72px;
+            text-align: center;
+            vertical-align: middle;
+            background-color: rgba(247, 242, 242, 0.904);
+            cursor: pointer;
+        }
+
+        .blink {
+            animation: blinker 0.5s linear infinite;
+        }
+
+        @keyframes blinker {
+            50% {
+                background-color: yellow;
+            }
+        }
+
+        #result {
+            color: aliceblue;
+            margin-left: 38%;
+        }
+    </style>
+</head>
+<body bgcolor="black">
+<audio id="keyPressSound" src="key_press.mp3"></audio>
+<audio id="winSound" src="wining.mp3"></audio>
+<audio id="DrawSound" src="draw.mp3"></audio>
+<h1 style="text-align: center;background-color: black; color: aliceblue;">Tic-Tac-Toe Game</h1>
+<table>
+    <tr>
+        <td style="height: 100%; width: 40%;">
+            <div style="height: 100%;width: 100%;background-color: aqua;">
+                <h1>RULES</h1>
+                <p style="font-weight: bold;font-size: 20;">
+                    Gameplay:<br>
+                    * The game is typically played by two players, one using "X" and the other using "O." Decide who goes
+                    first; often, "X" goes first.<br>
+                    Players take turns placing their symbol ("X" or "O") in an empty cell of the grid. The first player
+                    puts their symbol in any empty cell.<br>
+                    The players continue taking turns, one move at a time.<br>
+                    <br>
+                    Winning Conditions:<br>
+                    The game can be won in one of the following ways:<br>
+                    <br>
+                    * Horizontal Win: A player gets three of their symbols in a row on any horizontal line (top, middle,
+                    or bottom).<br>
+                    * Vertical Win: A player gets three of their symbols in a column on any vertical line (left, middle,
+                    or right).<br>
+                    * Diagonal Win: A player gets three of their symbols diagonally from one corner of the grid to
+                    another<br>
+                    (either from the top-left to the bottom-right or from the top-right to the bottom-left).<br>
+                    <br>
+                    Ending the Game:<br>
+                    * If a player succeeds in getting three of their symbols in a row, column, or diagonal, they win the
+                    game. The game ends immediately.<br>
+                    <br>
+                    * If all cells are filled, and no player has three in a row, the game is declared a draw, and it
+                    ends.<br>
+                    <br>
+                    Restarting the Game:<br>
+                    * Players can choose to start a new game if they want to play again. In digital versions, there may
+                    be a "Restart" or "New Game" button.<br>
+                    <br>
+            </div>
+        </td>
+        <td style="height: 100%; width: 60%;">
+            <div style="height: 100%;width: 100%; margin-left: 35%; margin-top: -10%;">
+                <label for="mode-select" style="color: aliceblue;">Select Game Mode:</label>
+                <select id="mode-select">
+                    <option value="single">Single Player vs. Computer</option>
+                    <option value="multi">Multiplayer</option>
+                </select>
+            </div>
+            <br>
+            <br>
+
+            <div class="board" id="board"></div>
+            <p id="result"></p>
+            <!-- Add win count display for player and computer -->
+            <div style="margin-left: 38%;">
+                <p id="player-win-count" style="color: aliceblue;display: inline;">Player Wins: 0</p>
+                <p id="computer-win-count" style="color: aliceblue;display: inline;">Computer Wins: 0</p>
+            </div>
+            <div style="margin-left: 38%;">
+                <p id="player1-win-count" style="color: aliceblue;display: inline;">Player1 Wins: 0</p>
+                <p id="player2-win-count" style="color: aliceblue;display: inline;">Player2 Wins: 0</p>
+            </div>
+            <br>
+            <button id="reset-button" style="margin-left: 38%;">Reset Game</button>
+        </td>
+    </tr>
+</table>
+
+<script>
+    const board = document.getElementById("board");
+    const result = document.getElementById("result");
+    const cells = [];
+    const modeSelect = document.getElementById("mode-select");
+    const resetButton = document.getElementById("reset-button");
+
+    let currentPlayer = "X";
+    let gameOver = false;
+    let gameMode = "single"; // Default mode is single player vs. computer
+    let playerWins = 0;
+    let computerWins = 0;
+    let player1Wins = 0;
+    let player2Wins = 0;
+
+    // Initialize the game board
+    function initializeBoard() {
+        cells.length = 0; // Clear the cells array
+        board.innerHTML = ""; // Clear the board
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                const cell = document.createElement("div");
+                cell.className = "cell";
+                cell.dataset.row = i;
+                cell.dataset.col = j;
+                cell.addEventListener("click", handleCellClick);
+                cells.push(cell);
+                board.appendChild(cell);
+            }
+        }
+    }
+
+    // Function to handle cell click
+    function handleCellClick(event) {
+        const cell = event.target;
+        if (cell.textContent !== "" || gameOver) return;
+            
+        // Play the key press sound
+        const keyPressSound = document.getElementById("keyPressSound");
+        if (keyPressSound) {
+            keyPressSound.play();
+        }
+
+        cell.textContent = currentPlayer;
+        checkForWinner();
+        if (!gameOver) {
+            currentPlayer = currentPlayer === "X" ? "O" : "X";
+            if (gameMode === "single" && !gameOver) {
+                computerMove();
+            }
+        }
+    }
+
+    // Function to make a random computer move
+    function computerMove() {
+        const emptyCells = cells.filter(cell => cell.textContent === "");
+        if (emptyCells.length === 0) return;
+    
+        // Delay the computer's move by 1 second (1000 milliseconds)
+        setTimeout(computerMoveLogic, 1000);
+    }
+
+    function computerMoveLogic() {
+        const emptyCells = cells.filter(cell => cell.textContent === "");
+        if (emptyCells.length === 0) return;
+    
+        const randomIndex = Math.floor(Math.random() * emptyCells.length);
+        const randomCell = emptyCells[randomIndex];
+        randomCell.textContent = currentPlayer;
+        checkForWinner();
+        if (!gameOver) {
+            currentPlayer = currentPlayer === "X" ? "O" : "X";
+        }
+    }
+
+    // Function to check for a winner
+    function checkForWinner() {
+        const winningCombos = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+            [0, 4, 8], [2, 4, 6] // Diagonals
+        ];
+
+        for (const combo of winningCombos) {
+            const [a, b, c] = combo;
+            if (
+                cells[a].textContent &&
+                cells[a].textContent === cells[b].textContent &&
+                cells[a].textContent === cells[c].textContent
+            ) {
+                // Make the winning cells blink
+                cells[a].classList.add("blink");
+                cells[b].classList.add("blink");
+                cells[c].classList.add("blink");
+                result.textContent = `${currentPlayer} wins!`;
+
+                if (gameMode === "single") {
+                    if (currentPlayer === "X") {
+                        playerWins++; // Increment player's win count
+                    } else {
+                        computerWins++; // Increment computer's win count
+                    }
+                } else if (gameMode === "multi") {
+                    if (currentPlayer === "X") {
+                        player1Wins++; // Increment player1's win count
+                    } else {
+                        player2Wins++; // Increment player2's win count
+                    }
+                }
+                updateWinCountDisplay();
+                gameOver = true;
+
+                // Play the winning sound
+                const winSound = document.getElementById("winSound");
+                if (winSound) {
+                    winSound.play();
+                }
+                return;
+            }
+        }
+
+        if (cells.every(cell => cell.textContent !== "")) {
+            // Make all cells blink in case of a draw
+            cells.forEach(cell => cell.classList.add("blink"));
+            result.textContent = "It's a draw!";
+            gameOver = true;
+            // Play the winning sound
+            const drawSound = document.getElementById("DrawSound");
+            if (drawSound) {
+                drawSound.play();
+            }
+            return;
+        }
+    }
+
+    function updateWinCountDisplay() {
+        const playerWinCount = document.getElementById("player-win-count");
+        const computerWinCount = document.getElementById("computer-win-count");
+        const player1WinCount = document.getElementById("player1-win-count");
+        const player2WinCount = document.getElementById("player2-win-count");
+
+        playerWinCount.textContent = `Player Wins: ${playerWins}`;
+        computerWinCount.textContent = `Computer Wins: ${computerWins}`;
+        player1WinCount.textContent = `Player1 Wins: ${player1Wins}`;
+        player2WinCount.textContent = `Player2 Wins: ${player2Wins}`;
+    }
+
+    // Function to reset the game
+    function resetGame() {
+        // Remove blinking classes
+        cells.forEach(cell => cell.classList.remove("blink"));
+
+        initializeBoard();
+        result.textContent = "";
+        currentPlayer = "X";
+        gameOver = false;
+        
+    }
+
+    // Add a click event listener to the reset button
+    resetButton.addEventListener("click", resetGame);
+
+    // Add a change event listener to the mode select dropdown
+    modeSelect.addEventListener("change", function () {
+        gameMode = modeSelect.value;
+        resetGame();
+    });
+
+    // Initialize the board and start the game
+    resetGame();
+</script>
+</body>
+</html>
